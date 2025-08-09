@@ -2,5 +2,21 @@
 .venv/
 
 # Data files
-data/interim/
+data/
+_open_data_repo/
+*.npz
 *.parquet
+
+# Ignore all data files, but keep the directory structure
+# and allow specific example files (if any) to be un-ignored.
+!data/.gitkeep
+!data/outputs/.gitkeep
+!data/outputs/figures/.gitkeep
+!data/outputs/models/.gitkeep
+!data/outputs/tables/.gitkeep
+!data/interim/.gitkeep
+!data/raw/.gitkeep
+
+# IDE files
+.idea/
+.vscode/

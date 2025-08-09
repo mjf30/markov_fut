@@ -21,29 +21,37 @@ tcc-markov/
    └─ outputs/      # modelos, figuras e tabelas finais
 ```
 
-## Como rodar
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+## Como obter os dados
+Este projeto utiliza o [StatsBomb Open Data](https://github.com/statsbomb/open-data).
 
-# Baixar dados (statsbombpy) OU colocar JSONs do repositório em data/raw
-python run.py --fetch --config config.yaml
+1. **Clone o repositório oficial:**
+   ```bash
+   git clone https://github.com/statsbomb/open-data.git _open_data_repo
+   ```
 
-# Limpeza, orientação por posse (sx,sy), zonas e ações
-python run.py --clean --config config.yaml
+2. **Copie os dados para a pasta `data/raw`:**
+   ```bash
+   mkdir -p data/raw
+   cp -r _open_data_repo/data/* data/raw/
+   ```
 
-# Construir estados e arestas (intra/flip + causa)
-python run.py --states --edges --config config.yaml
+## Como rodar o pipeline completo
+Para garantir a reprodutibilidade, siga os passos:
 
-# Estimar P e blocos
-python run.py --estimate --config config.yaml
+1. **Crie um ambiente virtual e instale as dependências:**
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
 
-# Métricas e figuras
-python run.py --evaluate --figures --config config.yaml
+2. **Execute o pipeline completo:**
+   O comando a seguir executa todas as etapas, desde a limpeza dos dados até a geração de métricas e figuras.
+   ```bash
+   python run.py --all --config config.yaml
+   ```
 
-# Ou tudo de uma vez:
-python run.py --all --config config.yaml
-```
+   As etapas individuais (`--clean`, `--states`, `--edges`, `--estimate`, `--evaluate`, `--figures`) também podem ser executadas separadamente.
 
 ## Modelo (resumo)
 - **Estado = (role, zone, action)**  
