@@ -1,0 +1,10 @@
+statsbombpy==1.16.0
+pandas==2.2.2
+numpy==1.26.4
+scipy==1.13.1
+pyyaml==6.0.2
+matplotlib==3.9.0
+mplsoccer==1.2.2
+tqdm==4.66.4
+networkx==3.3
+pyarrow==16.1.0

@@ -1,0 +1,6 @@
+# Python virtual environment
+.venv/
+
+# Data files
+data/interim/
+*.parquet
