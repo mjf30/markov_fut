@@ -61,3 +61,4 @@ python run.py --all --config config.yaml
 - `data/outputs/figures/`: `heatmap_recovery.png`, `graph_threshold.png`, `sankey_kernel.png`
 - `data/outputs/tables/`: `metrics.csv`, `recovery_rates.csv`, `kernel_flip.csv`
 # markov_fut
+# markov_fut
