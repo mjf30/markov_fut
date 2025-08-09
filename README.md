@@ -62,3 +62,4 @@ python run.py --all --config config.yaml
 - `data/outputs/tables/`: `metrics.csv`, `recovery_rates.csv`, `kernel_flip.csv`
 # markov_fut
 # markov_fut
+# markov_fut
