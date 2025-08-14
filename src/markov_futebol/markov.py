@@ -43,28 +43,21 @@ def placar_relativo(event: dict, gols_por_time: Dict[int, int]) -> tuple[int, in
 
 def construir_transicoes(events: List[dict]) -> Transicoes:
     counts: Dict[tuple[str, str], int] = defaultdict(int)
-    # Percorre por posse
-    by_possession: Dict[int, List[dict]] = defaultdict(list)
-    for ev in events:
-        pid = ev.get("possession")
-        if pid is not None:
-            by_possession[pid].append(ev)
-
     gols_por_time: Dict[int, int] = {}
+    
+    # Constrói uma única sequência de estados para todo o jogo
+    estados_seq: List[str] = []
+    for ev in events:
+        atualizar_placar(ev, gols_por_time)
+        rel = placar_relativo(ev, gols_por_time)
+        est = construir_estado(ev, rel)
+        if est is not None:
+            estados_seq.append(est.key())
 
-    for pid, seq in by_possession.items():
-        # percorre na ordem; atualiza placar e coleta estados somente da equipe em posse
-        estados_seq: List[str] = []
-        for ev in seq:
-            atualizar_placar(ev, gols_por_time)
-            rel = placar_relativo(ev, gols_por_time)
-            est = construir_estado(ev, rel)
-            if est is not None:
-                estados_seq.append(est.key())
-        # conta transições sucessivas s_i -> s_{i+1}
-        for i in range(len(estados_seq) - 1):
-            a, b = estados_seq[i], estados_seq[i + 1]
-            counts[(a, b)] += 1
+    # Conta transições sucessivas s_i -> s_{i+1}
+    for i in range(len(estados_seq) - 1):
+        a, b = estados_seq[i], estados_seq[i + 1]
+        counts[(a, b)] += 1
 
     # Normalização por origem
     totals: Dict[str, int] = defaultdict(int)

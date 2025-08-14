@@ -36,12 +36,6 @@ def acao(event: dict) -> Optional[str]:
     return None
 
 
-def posse_valida(event: dict) -> bool:
-    team = (event.get("team") or {}).get("id")
-    possession_team = (event.get("possession_team") or {}).get("id")
-    return team is not None and team == possession_team
-
-
 @dataclass(frozen=True)
 class Estado:
     # P(ossuidor)/S(em posse), zona, ação, situação (FAV/NEU/DES)
@@ -63,14 +57,20 @@ def situacao_jogo(gols_time: int, gols_adv: int) -> str:
 
 
 def construir_estado(event: dict, placar_rel: Tuple[int, int]) -> Optional[Estado]:
-    if not posse_valida(event):
+    team_id = (event.get("team") or {}).get("id")
+    possession_team_id = (event.get("possession_team") or {}).get("id")
+    if not team_id or not possession_team_id:
         return None
+
+    posse_char = "P" if team_id == possession_team_id else "S"
+
     loc = event.get("location")
     x = loc[0] if isinstance(loc, list) and len(loc) >= 1 else None
     z = zona_por_x(x)
     a = acao(event)
     if z is None or a is None:
         return None
+
     gols_time, gols_adv = placar_rel
     sit = situacao_jogo(gols_time, gols_adv)
-    return Estado(posse="P", zona=z, acao=a, situacao=sit)
+    return Estado(posse=posse_char, zona=z, acao=a, situacao=sit)
