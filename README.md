@@ -1,77 +1,75 @@
-# TCC — Cadeias de Markov em Futebol (StatsBomb Open Data)
+# markov-futebol
 
-Projeto **simples e científico** para modelar partidas de futebol com **Cadeias de Markov de 1ª ordem** usando **StatsBomb Open Data** (eventos).  
-O foco é **clareza**, **legibilidade** e **reprodutibilidade** — em poucos arquivos fáceis de alterar.
+Projeto simples para **modelar transições táticas** em partidas de futebol usando **Cadeias de Markov de primeira ordem**, a partir do repositório **StatsBomb Open Data** (incluído neste projeto).
 
-> **Atribuição obrigatória**: *Data source: StatsBomb Open Data (academic, non-commercial use).*
+> Estados = (posse, zona, ação, situação do jogo)
 
-## Estrutura
+- **Posse**: `P` (com posse) — derivado de `possession_team`.
+- **Zona** (eixo X do campo): `D` (0–40), `M` (40–80), `A` (80–120).
+- **Ação** (mapeamento discreto): `PAS` (passa), `FIN` (finaliza), `PER` (perde), `REC` (recupera).
+- **Situação**: `FAV` (placar favorável), `NEU` (empate), `DES` (desfavorável).
+
+O pipeline varre eventos, **extrai sequências por posse** e **conta transições sucessivas** da mesma equipe. Em seguida normaliza para formar a **matriz de transição** e gera um **grafo dirigido** das transições dominantes.
+
+O caminho dos dados (`--data-root`) aponta por padrão para a pasta local `./_open_data_repo`.
+
+## Instalação rápida (modo dev)
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # (Windows: .venv\Scripts\activate)
+pip install -e .
 ```
-tcc-markov/
-├─ README.md
-├─ requirements.txt
-├─ config.yaml
-├─ run.py
-├─ src/
-│  ├─ markov_futebol.py
-│  └─ plotting.py
-└─ data/
-   ├─ raw/          # JSONs do Open Data (ou cache do statsbombpy)
-   ├─ interim/      # eventos limpos + campos auxiliares
-   └─ outputs/      # modelos, figuras e tabelas finais
+
+## Uso
+
+Existem dois modos principais: `build` (com IDs numéricos) e `run` (com nomes em um arquivo de configuração).
+
+### 1. Comando `build` (com IDs)
+
+Exemplo: Premier League 2017/2018 (IDs fictícios).
+
+```bash
+markov-futebol build --out ./saida --competition 2 --season 1
 ```
 
-## Como obter os dados
-Este projeto utiliza o [StatsBomb Open Data](https://github.com/statsbomb/open-data).
+Isso cria:
+- `saida/transition_counts.csv` (contagens)
+- `saida/transition_matrix.csv` (probabilidades)
+- `saida/states.csv` (dicionário de estados observados)
+- `saida/graph.png` (grafo das transições mais prováveis)
 
-1. **Clone o repositório oficial:**
-   ```bash
-   git clone https://github.com/statsbomb/open-data.git _open_data_repo
-   ```
+Você também pode rodar em **um jogo específico**:
+```bash
+markov-futebol build --out ./saida_jogo --match-id 303471
+```
 
-2. **Copie os dados para a pasta `data/raw`:**
-   ```bash
-   mkdir -p data/raw
-   cp -r _open_data_repo/data/* data/raw/
-   ```
+### 2. Comando `run` (com `config.yaml`)
 
-## Como rodar o pipeline completo
-Para garantir a reprodutibilidade, siga os passos:
+1) Copie `config.example.yaml` para `config.yaml`.
+2) Edite os nomes da competição, temporada e (opcional) time. O campo `data_root` é opcional.
 
-1. **Crie um ambiente virtual e instale as dependências:**
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
-   ```
+3) Rode:
+```bash
+markov-futebol run config.yaml
+```
 
-2. **Execute o pipeline completo:**
-   O comando a seguir executa todas as etapas, desde a limpeza dos dados até a geração de métricas e figuras.
-   ```bash
-   python run.py --all --config config.yaml
-   ```
+O script resolve os IDs automaticamente e executa o pipeline.
 
-   As etapas individuais (`--clean`, `--states`, `--edges`, `--estimate`, `--evaluate`, `--figures`) também podem ser executadas separadamente.
+## Decisões e ajustes em relação ao pré‑projeto
 
-## Modelo (resumo)
-- **Estado = (role, zone, action)**  
-  `role ∈ {"atk","def"}`; `zone` = grid 3×3 (x:[0,40)[40,80)[80,120]; y:[0,26.66)[26.66,53.33)[53.33,80]);  
-  `action ∈ {"pass","carry","dribble","shot","clearance","other"}`.
-- **Orientação**: padronize coordenadas para a **perspectiva do time em posse**:  
-  eventos do time **sem posse** → espelhar `(sx,sy)=(120-x, 80-y)`.
-- **Transições**: “intra” (mesmo time) e “flip” (troca de posse).  
-  Causas (heurística): `interception > tackle > foul_won > out > miscontrol > pressure_loss > other`.
-- **Estimativa**: contagens \(C\) → suavização (α=0.3) → normalização por linha → \(P\) + blocos \(A,B,C,D\).
-- **Padrões**: *Ball Receipt* não gera arestas; `shot` terminal (padrão).
+- **Estados discretos**: mantivemos quatro dimensões propostas; para zona, usamos apenas o eixo **X** (0–120) dividido em três terços iguais.  
+- **Ações**: reduzimos para {`PAS`, `FIN`, `PER`, `REC`} como no pré-projeto. Passes incompletos e perdas de bola (`Dispossessed`, `Miscontrol`) viram **PER**; `Ball Recovery` vira **REC**.
+- **Posse**: só consideramos eventos em que `team` == `possession_team` de cada evento (transições “válidas” da mesma equipe).
+- **Placar em tempo real**: o script reconstrói o placar **percorrendo os eventos** e detectando gols em `shot.outcome == "Goal"` (ou `own_goal`). Situação do jogo é calculada **relativa à equipe do evento**.
+- **Sequências por posse**: eventos são **segmentados pelo campo `possession`**; cada sequência contribui com transições `sᵢ → sⱼ`.
+- **Campos sem localização**: eventos sem `location` são ignorados para transições.
+- **Visualização**: geramos um grafo dirigindo **apenas arestas com probabilidade ≥ 0.05** para deixar a figura legível.
 
-## Saídas
-- `data/outputs/models/`: `P_full.npz`, `P_blocks.npz`, `state_index.json`
-- `data/outputs/figures/`: `heatmap_recovery.png`, `graph_threshold.png`, `sankey_kernel.png`
-- `data/outputs/tables/`: `metrics.csv`, `recovery_rates.csv`, `kernel_flip.csv`
-# markov_fut
-# markov_fut
-# markov_fut
-# markov_fut
-# markov_fut
-# markov_fut
-# markov_fut
+## Limitações conhecidas
+- Mapeamento de ações é propositalmente **simples**.
+- Nem todos os eventos têm `location`.
+- As regras de posse dos dados StatsBomb são respeitadas, mas o projeto mantém a **primeira ordem** da cadeia.
+
+## Licença
+Projeto acadêmico para estudo. Dados por StatsBomb Open Data (créditos dos dados no repositório oficial).
