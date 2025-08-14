@@ -1,0 +1,8 @@
+# config.yaml — Premier League 2015/2016 (toda a liga)
+data_root: /caminho/para/seu/clone/open-data   # repo statsbomb/open-data que você clonou (contém a pasta data/)
+out: ./saida_pl_2015_16                        # pasta onde os arquivos de saída serão gerados
+scope:
+  competition: Premier League                  # nome exatamente como em competitions.json
+  season: 2015/2016                            # cuidado para usar "2015/2016" (e não "2015/16")
+  # team:                                       # (opcional) deixe comentado para agregar toda a liga
+prob_threshold: 0.05                            # arestas mínimas (prob.) no grafo para manter legível

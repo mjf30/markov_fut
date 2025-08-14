@@ -1,8 +1,14 @@
-# Exemplo de configuração para rodar a análise por NOME (sem IDs)
-data_root: /caminho/para/seu/clone/open-data   # deve conter a pasta data/
-out: ./saida_pl_2015_16
+# Caminho para a pasta de dados. Opcional, o padrão é ./_open_data_repo
+# data_root: "~/open-data"
+
+# Onde salvar os arquivos de saída (CSVs, grafo)
+out: ./saida_config
+
+# Escopo da análise: nomes da competição e temporada
 scope:
-  competition: Premier League    # nome conforme competitions.json
-  season: 2015/2016              # exatamente como está no arquivo
-  # team: Arsenal                # opcional: para filtrar só os jogos do time
-prob_threshold: 0.05             # arestas mínimas para o grafo
+  competition: "Premier League"
+  season: "2015/2016"
+  # team: "Leicester"  # Opcional: filtre por um time específico
+
+# Limiar de probabilidade para desenhar uma aresta no grafo
+prob_threshold: 0.05
