@@ -41,16 +41,18 @@ def placar_relativo(event: dict, gols_por_time: Dict[int, int]) -> tuple[int, in
     return (gols_time, gols_adv)
 
 
-def construir_transicoes(events: List[dict]) -> Transicoes:
+def construir_transicoes(
+    events: List[dict], incluir_situacao: bool = True
+) -> Transicoes:
     counts: Dict[tuple[str, str], int] = defaultdict(int)
     gols_por_time: Dict[int, int] = {}
-    
+
     # Constrói uma única sequência de estados para todo o jogo
     estados_seq: List[str] = []
     for ev in events:
         atualizar_placar(ev, gols_por_time)
         rel = placar_relativo(ev, gols_por_time)
-        est = construir_estado(ev, rel)
+        est = construir_estado(ev, rel, incluir_situacao=incluir_situacao)
         if est is not None:
             estados_seq.append(est.key())
 

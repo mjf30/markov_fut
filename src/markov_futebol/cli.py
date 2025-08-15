@@ -13,7 +13,11 @@ app = typer.Typer(help="Cadeias de Markov simples com StatsBomb Open Data.")
 
 
 def _run_pipeline(
-    match_ids: list[int], data_root: Path, out_dir: Path, prob_threshold: float
+    match_ids: list[int],
+    data_root: Path,
+    out_dir: Path,
+    prob_threshold: float,
+    incluir_situacao: bool,
 ):
     """Executa o pipeline de carga, construção e salvamento."""
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -31,7 +35,7 @@ def _run_pipeline(
 
     print(f"[bold]Eventos carregados:[/bold] {len(eventos)}")
 
-    trans = construir_transicoes(eventos)
+    trans = construir_transicoes(eventos, incluir_situacao=incluir_situacao)
 
     # Salva contagens
     counts_csv = out_dir / "transition_counts.csv"
@@ -75,6 +79,9 @@ def build(
         dir_okay=True,
         help="Raiz do repo open-data (contendo pasta data/)",
     ),
+    sem_situacao: bool = typer.Option(
+        False, "--sem-situacao", help="Remove a situação do jogo (placar) da análise."
+    ),
     competition: int = typer.Option(None, "--competition", "-c"),
     season: int = typer.Option(None, "--season", "-s"),
     match_id: int = typer.Option(None, "--match-id", "-m"),
@@ -93,7 +100,13 @@ def build(
     else:
         match_ids = [match_id]
 
-    _run_pipeline(match_ids, data_root, out, prob_threshold)
+    _run_pipeline(
+        match_ids,
+        data_root,
+        out,
+        prob_threshold,
+        incluir_situacao=not sem_situacao,
+    )
 
 
 @app.command()
@@ -113,6 +126,7 @@ def run(
     season_name = scope["season"]
     team_name = scope.get("team")  # opcional
     prob_threshold = float(cfg.get("prob_threshold", 0.05))
+    incluir_situacao = bool(cfg.get("incluir_situacao", True))
 
     # Resolver match_ids
     match_ids = list_match_ids_by_names(
@@ -120,7 +134,7 @@ def run(
     )
     print(f"[bold]Jogos selecionados:[/bold] {len(match_ids)}")
 
-    _run_pipeline(match_ids, data_root, out_dir, prob_threshold)
+    _run_pipeline(match_ids, data_root, out_dir, prob_threshold, incluir_situacao)
 
 
 if __name__ == "__main__":

@@ -42,10 +42,13 @@ class Estado:
     posse: str
     zona: str
     acao: str
-    situacao: str  # FAV, NEU, DES
+    situacao: Optional[str] = None  # FAV, NEU, DES
 
     def key(self) -> str:
-        return f"{self.posse}_{self.zona}_{self.acao}_{self.situacao}"
+        k = f"{self.posse}_{self.zona}_{self.acao}"
+        if self.situacao:
+            k += f"_{self.situacao}"
+        return k
 
 
 def situacao_jogo(gols_time: int, gols_adv: int) -> str:
@@ -56,7 +59,9 @@ def situacao_jogo(gols_time: int, gols_adv: int) -> str:
     return "NEU"
 
 
-def construir_estado(event: dict, placar_rel: Tuple[int, int]) -> Optional[Estado]:
+def construir_estado(
+    event: dict, placar_rel: Tuple[int, int], incluir_situacao: bool = True
+) -> Optional[Estado]:
     team_id = (event.get("team") or {}).get("id")
     possession_team_id = (event.get("possession_team") or {}).get("id")
     if not team_id or not possession_team_id:
@@ -71,6 +76,9 @@ def construir_estado(event: dict, placar_rel: Tuple[int, int]) -> Optional[Estad
     if z is None or a is None:
         return None
 
-    gols_time, gols_adv = placar_rel
-    sit = situacao_jogo(gols_time, gols_adv)
+    sit = None
+    if incluir_situacao:
+        gols_time, gols_adv = placar_rel
+        sit = situacao_jogo(gols_time, gols_adv)
+
     return Estado(posse=posse_char, zona=z, acao=a, situacao=sit)
