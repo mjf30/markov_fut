@@ -11,8 +11,6 @@ Projeto simples para **modelar transições táticas** em partidas de futebol us
 
 O pipeline varre eventos, **extrai sequências por posse** e **conta transições sucessivas** da mesma equipe. Em seguida normaliza para formar a **matriz de transição** e gera um **grafo dirigido** das transições dominantes.
 
-O caminho dos dados (`--data-root`) aponta por padrão para a pasta local `./_open_data_repo`.
-
 ## Instalação rápida (modo dev)
 
 ```bash
@@ -23,38 +21,52 @@ pip install -e .
 
 ## Uso
 
-Existem dois modos principais: `build` (com IDs numéricos) e `run` (com nomes em um arquivo de configuração).
+Toda a configuração é feita através de um arquivo `config.yaml`.
 
-### 1. Comando `build` (com IDs)
+1) Edite `config.yaml` para definir o escopo da análise (usando nomes ou IDs) e outros parâmetros.
 
-Exemplo: Premier League 2017/2018 (IDs fictícios).
+Exemplo de `config.yaml`:
+```yaml
+# Raiz do repositório open-data (opcional, default: ./_open_data_repo)
+data_root: ./statsbomb_data
 
-```bash
-markov-futebol build --out ./saida --competition 2 --season 1
+# Pasta de saída (opcional, default: ./saida)
+out: ./saida
+
+# --- MODO DE EXECUÇÃO ---
+# Escolha UMA das seções abaixo: 'scope' (nomes) ou 'ids' (números).
+# Se ambas estiverem preenchidas, 'ids' terá prioridade.
+
+# Seção 1: Usar nomes (mais fácil)
+scope:
+  competition: "La Liga"
+  season: "2020/2021"
+  # team: "Barcelona"  # Opcional: filtrar por um time específico
+
+# Seção 2: Usar IDs numéricos
+ids:
+  competition_id: null
+  season_id: null
+  # match_id: 3788872 # Opcional: para rodar em um único jogo
+
+# --- PARÂMETROS DE ANÁLISE ---
+params:
+  # Incluir a situação do jogo (placar) na análise? (true/false)
+  incluir_situacao: true
+  # Arestas com probabilidade mínima para o grafo (0.0 a 1.0)
+  prob_threshold: 0.05
 ```
 
-Isso cria:
-- `saida/transition_counts.csv` (contagens)
-- `saida/transition_matrix.csv` (probabilidades)
-- `saida/states.csv` (dicionário de estados observados)
-- `saida/graph.png` (grafo das transições mais prováveis)
-
-Você também pode rodar em **um jogo específico**:
+2) Rode o comando:
 ```bash
-markov-futebol build --out ./saida_jogo --match-id 303471
+markov-soccer run config.yaml
 ```
 
-### 2. Comando `run` (com `config.yaml`)
-
-1) Copie `config.example.yaml` para `config.yaml`.
-2) Edite os nomes da competição, temporada e (opcional) time. O campo `data_root` é opcional.
-
-3) Rode:
-```bash
-markov-futebol run config.yaml
-```
-
-O script resolve os IDs automaticamente e executa o pipeline.
+O script irá gerar os seguintes arquivos na pasta de saída definida:
+- `transition_counts.csv` (contagens)
+- `transition_matrix.csv` (probabilidades)
+- `states.csv` (dicionário de estados observados)
+- `graph.png` (grafo das transições mais prováveis)
 
 ## Decisões e ajustes em relação ao pré‑projeto
 

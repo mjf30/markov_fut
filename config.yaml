@@ -1,8 +1,28 @@
-# config.yaml — Premier League 2015/2016 (toda a liga)
-data_root: /caminho/para/seu/clone/open-data   # repo statsbomb/open-data que você clonou (contém a pasta data/)
-out: ./saida_pl_2015_16                        # pasta onde os arquivos de saída serão gerados
+# Root of the open-data repository (optional, default: ./statsbomb_data)
+data_root: ./statsbomb_data
+
+# Output directory (optional, default: ./output)
+out: ./output
+
+# --- EXECUTION MODE ---
+# Choose ONE of the sections below: 'scope' (names) or 'ids' (numbers).
+# If both are filled, 'ids' will take priority.
+
+# Section 1: Use names (easier)
 scope:
-  competition: Premier League                  # nome exatamente como em competitions.json
-  season: 2015/2016                            # cuidado para usar "2015/2016" (e não "2015/16")
-  # team:                                       # (opcional) deixe comentado para agregar toda a liga
-prob_threshold: 0.05                            # arestas mínimas (prob.) no grafo para manter legível
+  competition: "Premier League"
+  season: "2015/2016"
+  # team: "Barcelona"  # Optional: filter by a specific team
+
+# Section 2: Use numeric IDs
+ids:
+  competition_id: null
+  season_id: null
+  # match_id: 3788872 # Optional: to run for a single match
+
+# --- ANALYSIS PARAMETERS ---
+params:
+  # Include game situation (score) in the analysis? (true/false)
+  include_situation: false
+  # Minimum probability for edges in the graph (0.0 to 1.0)
+  prob_threshold: 0.05
