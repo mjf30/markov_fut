@@ -1,0 +1,2 @@
+[console_scripts]
+markov-fut = markov_fut.cli:app

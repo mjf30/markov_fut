@@ -1,28 +1,7 @@
-# Root of the open-data repository (optional, default: ./statsbomb_data)
 data_root: ./statsbomb_data
-
-# Output directory (optional, default: ./output)
-out: ./output
-
-# --- EXECUTION MODE ---
-# Choose ONE of the sections below: 'scope' (names) or 'ids' (numbers).
-# If both are filled, 'ids' will take priority.
-
-# Section 1: Use names (easier)
+out: ./saida_man_city
 scope:
-  competition: "Premier League"
-  season: "2015/2016"
-  # team: "Barcelona"  # Optional: filter by a specific team
-
-# Section 2: Use numeric IDs
-ids:
-  competition_id: null
-  season_id: null
-  # match_id: 3788872 # Optional: to run for a single match
-
-# --- ANALYSIS PARAMETERS ---
-params:
-  # Include game situation (score) in the analysis? (true/false)
-  include_situation: false
-  # Minimum probability for edges in the graph (0.0 to 1.0)
-  prob_threshold: 0.05
+  competition: Premier League
+  season: 2015/2016
+  team: Manchester City
+prob_threshold: 0.08
