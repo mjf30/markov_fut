@@ -6,26 +6,19 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, FancyArrowPatch
 from collections import defaultdict
 
-# ---- Grid config (D/M/A columns, P/S rows) ----
 COL_X = {"D": 0.0, "M": 1.0, "A": 2.0}
 ROW_Y = {"P": 0.0, "S": -1.0}
 ACTION_OFFSET = {"PAS": (-0.22, 0.0), "FIN": (0.0, 0.22), "PER": (0.22, 0.0), "REC": (0.0, -0.22)}
-
-# Node fill colors by action
 ACTION_COLOR = {"PAS":"#3b82f6","FIN":"#f59e0b","PER":"#ef4444","REC":"#8b5cf6"}
-# Edge color by possession relation
 EDGE_COLOR   = {"PP":"#1f3b73","SS":"#7b3f82","PS":"#d45087","SP":"#2ca02c"}
 
-# ---------- helpers ----------
 def _parse_state(s: str):
-    try:
-        p, z, a = s.split("_", 2); return p, z, a
-    except Exception:
-        return None, None, None
+    try: p,z,a = s.split("_",2); return p,z,a
+    except Exception: return None,None,None
 
 def _edge_color(a: str, b: str) -> str:
     pa,_,_ = _parse_state(a); pb,_,_ = _parse_state(b)
-    return EDGE_COLOR.get((pa or "") + (pb or ""), "#444444")
+    return EDGE_COLOR.get((pa or "")+(pb or ""), "#444444")
 
 def _layout_positions(states, mirror_s: bool):
     pos = {}
@@ -33,8 +26,7 @@ def _layout_positions(states, mirror_s: bool):
         P, Z, A = _parse_state(s)
         if P is None: continue
         x = COL_X.get(Z, 1.0)
-        if mirror_s and P == "S":
-            x = 2.0 - x
+        if mirror_s and P == "S": x = 2.0 - x
         y = ROW_Y.get(P, -1.0)
         dx, dy = ACTION_OFFSET.get(A, (0.0, 0.0))
         pos[s] = (x + dx, y + dy)
@@ -42,7 +34,7 @@ def _layout_positions(states, mirror_s: bool):
 
 def _counts_out(counts: Dict[Tuple[str,str], int]) -> Dict[str, int]:
     tot = defaultdict(int)
-    for (a,b),c in counts.items():
+    for (a,b),c in (counts or {}).items():
         tot[a] += c; tot[b] += 0
     return tot
 
@@ -67,7 +59,7 @@ def _shorten_segment(p0, p1, r0, r1):
     L = math.hypot(dx,dy)
     if L < 1e-6: return p0, p1
     ux, uy = dx/L, dy/L
-    return (x0+ux*r0, y0+uy*r0), (x1-ux*r1, y1-uy*r1)
+    return (x0+ux*r0, y0+uy*r0), (x1-ux*rb, y1-uy*rb)
 
 def _filter_edges(
     probs: Dict[Tuple[str,str], float],
@@ -77,6 +69,7 @@ def _filter_edges(
     min_count: int = 0,
 ) -> Dict[Tuple[str,str], float]:
     counts = counts or {}
+    from collections import defaultdict
     tot_out = _counts_out(counts)
     cand = []
     for (a,b), p in probs.items():
@@ -87,7 +80,6 @@ def _filter_edges(
             score = p * max(1, tot_out.get(a,0))
             cand.append(((a,b), p, ce, score))
     keep: Dict[Tuple[str,str], float] = {}
-    from collections import defaultdict
     by_src = defaultdict(list)
     for e, p, ce, sc in cand:
         by_src[e[0]].append((e,p,ce,sc))
@@ -98,7 +90,6 @@ def _filter_edges(
             keep[e] = p
     return keep
 
-# ---------- API ----------
 def plot_graph(
     probs: Dict[Tuple[str,str], float],
     out_png: str,
@@ -111,7 +102,7 @@ def plot_graph(
     min_count: int = 0,
     node_radius_min: float = 0.050,
     node_radius_max: float = 0.090,
-    loop_label_gap: float = 0.14,        # distância do rótulo de self-loop para fora do nó
+    loop_label_gap: float = 0.14,
     arrowsize_scale: float = 16.0,
 ) -> None:
     if threshold is not None:
@@ -120,7 +111,6 @@ def plot_graph(
     states = sorted({a for (a,_b) in probs} | {b for (_a,b) in probs})
     pos = _layout_positions(states, mirror_s=mirror_s)
 
-    # raios por volume (se counts fornecido)
     tot_out = _counts_out(counts or {})
     vols = [math.sqrt(max(1, tot_out.get(s, 0))) for s in states]
     p95 = max(_percentile(vols, 0.95), 1.0) if vols else 1.0
@@ -135,7 +125,7 @@ def plot_graph(
     ax = plt.gca()
     _draw_background_grid(ax)
 
-    # desenha nós
+    # nós
     for s in states:
         P, Z, A = _parse_state(s)
         x,y = pos[s]; r = radii[s]
@@ -145,7 +135,7 @@ def plot_graph(
         ax.text(x, y, s, ha="center", va="center", fontsize=9.5,
                 bbox=dict(boxstyle="round,pad=0.12", facecolor="white", edgecolor="none", alpha=0.6), zorder=3)
 
-    # self-loop labels (SEM desenhar aresta)
+    # self-loop: apenas label
     def _loop_angle(zone: str, prefix: str) -> float:
         if zone == "D": return math.pi
         if zone == "A": return 0.0
@@ -153,7 +143,7 @@ def plot_graph(
 
     for s in states:
         p_loop = probs.get((s,s))
-        if p_loop is None: 
+        if p_loop is None:
             continue
         P, Z, _ = _parse_state(s)
         ang = _loop_angle(Z or "M", P or "P")
@@ -165,7 +155,15 @@ def plot_graph(
 
     # arestas normais
     for (a,b), w in edges.items():
-        start, end = _shorten_segment(pos[a], pos[b], radii[a], radii[b])
+        (x0,y0) = pos[a]; (x1,y1) = pos[b]
+        ra, rb = radii[a], radii[b]
+        dx,dy = x1-x0, y1-y0
+        L = math.hypot(dx,dy)
+        if L < 1e-6: 
+            continue
+        ux,uy = dx/L, dy/L
+        start = (x0+ux*ra, y0+uy*ra)
+        end   = (x1-ux*rb, y1-uy*rb)
         col = _edge_color(a,b)
         patch = FancyArrowPatch(start, end,
                                 connectionstyle="arc3,rad=0.05",

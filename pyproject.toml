@@ -5,8 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "markov-fut"
 version = "0.5.0"
-description = "Cadeias de Markov (StatsBomb) com P/S por equipe foco, reset por jogo e filtro robusto por eventos."
-authors = [{ name = "Você" }]
+description = "A simple CLI tool to build Markov chains from StatsBomb soccer data."
+authors = [{ name = "Your Name" }]
 requires-python = ">=3.9"
 dependencies = [
   "pandas>=2.1",

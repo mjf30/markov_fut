@@ -1,7 +1,7 @@
 data_root: ./statsbomb_data
-out: ./saida_man_city
+out: ./saida_leic_city_2
 scope:
   competition: Premier League
   season: 2015/2016
-  team: Manchester City
+  team: Leicester City
 prob_threshold: 0.08
